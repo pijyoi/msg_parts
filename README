@@ -1,0 +1,9 @@
+Simple zeromq multipart messages for C++.
+
+This is meant to replace the following modules in CZMQ:
+zstr.c
+zframe.c
+zmsg.c
+
+The advantage is that msg_single_t/msg_multi_t objects on the stack get cleaned up automatically.
+
