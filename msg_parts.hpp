@@ -23,7 +23,7 @@ public:
 
 	size_t size() {	return zmq_msg_size(&msg); }
 	void* data() { return zmq_msg_data(&msg); }
-	bool more() { return zmq_msg_more(&msg); }
+	bool more() { return zmq_msg_more(&msg)!=0; }
 
 	int recv(void *zsock, int flags=0) { return zmq_msg_recv(&msg, zsock, flags); }
 	int send(void *zsock, int flags=0) { return zmq_msg_send(&msg, zsock, flags); }
@@ -31,7 +31,7 @@ public:
 	std::string as_string() { return std::string(reinterpret_cast<char*>(data()), size()); }
 private:
 	msg_single_t(const msg_single_t&);
-	void operator=(const msg_single_t&);
+	msg_single_t& operator=(const msg_single_t&);
 };
 
 class msg_multi_t
