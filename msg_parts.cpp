@@ -44,8 +44,13 @@ int msg_parts_selftest()
     std::string str2("Frame2");
     msg.parts.push_back(str2);
 
+    // we have no copy constructor for msg_single_t
+    // thus you have to explicitly use std::move
+    // if you construct the frame on another line
+    msg_single_t frame("Frame3", 6);
+    msg.parts.push_back(std::move(frame));
+
     // No need to create a msg_single_t explicitly
-    msg.parts.push_back("Frame3");
     msg.parts.push_back("Frame4");
     msg.parts.push_back("Frame5");
     msg.parts.push_back("Frame6");
