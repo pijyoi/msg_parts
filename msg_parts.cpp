@@ -22,27 +22,36 @@ int msg_parts_selftest()
     
     //  Test send and receive of single-frame message
     msg.reset();
-    msg.parts.push_back(new msg_single_t("Hello", 5));
+    msg.parts.push_back("Hello");
     rc = msg.send(output);
     assert (rc == 0);
 
     rc = msg.recv(input);
     assert (rc == 0);
-    std::string str = msg.parts.front()->as_string();
+    std::string str = msg.parts.front().as_string();
     printf("%s\n", str.c_str());
 
     //  Test send and receive of multi-frame message
     msg.reset();
-    msg.parts.push_back(new msg_single_t("Frame0", 6));
-    msg.parts.push_back(new msg_single_t("Frame1", 6));
-    msg.parts.push_back(new msg_single_t("Frame2", 6));
-    msg.parts.push_back(new msg_single_t("Frame3", 6));
-    msg.parts.push_back(new msg_single_t("Frame4", 6));
-    msg.parts.push_back(new msg_single_t("Frame5", 6));
-    msg.parts.push_back(new msg_single_t("Frame6", 6));
-    msg.parts.push_back(new msg_single_t("Frame7", 6));
-    msg.parts.push_back(new msg_single_t("Frame8", 6));
-    msg.parts.push_back(new msg_single_t("Frame9", 6));
+    msg.parts.push_back(msg_single_t("Frame0", 6));
+    msg.parts.push_back(msg_single_t("Frame1"));
+
+    // Following doesn't work because msg_single_t has no constructor 
+    // that takes a std::string by _value_
+    //msg.parts.push_back(std::string("Frame2"));
+    // The following uses the msg_single_t constructor that takes a 
+    // std::string by _reference_
+    std::string str2("Frame2");
+    msg.parts.push_back(str2);
+
+    // No need to create a msg_single_t explicitly
+    msg.parts.push_back("Frame3");
+    msg.parts.push_back("Frame4");
+    msg.parts.push_back("Frame5");
+    msg.parts.push_back("Frame6");
+    msg.parts.push_back("Frame7");
+    msg.parts.push_back("Frame8");
+    msg.parts.push_back("Frame9");
     rc = msg.send(output);
     assert (rc == 0);
 
@@ -51,10 +60,9 @@ int msg_parts_selftest()
     assert (msg.parts.size() == 10);
 
     for (auto it=msg.parts.begin(); it!=msg.parts.end(); ++it) {
-        std::string str = (*it)->as_string();
+        std::string str = (*it).as_string();
         printf("%s\n", str.c_str());
     }
-
 
     zctx_destroy (&ctx);
     //  @end

@@ -16,6 +16,17 @@ public:
 		zmq_msg_init_size(&msg, size); 
 		memcpy(data(), buffer, size); 
 	}
+	msg_single_t(const char* str)
+	{
+		size_t size = strlen(str);
+		zmq_msg_init_size(&msg, size);
+		memcpy(data(), str, size);
+	}
+	msg_single_t(std::string& str)
+	{
+		zmq_msg_init_size(&msg, str.size());
+		memcpy(data(), str.data(), str.size());
+	}
 	~msg_single_t() { zmq_msg_close(&msg); }
 
 	void reset() { zmq_msg_close(&msg); zmq_msg_init(&msg); }
@@ -29,7 +40,21 @@ public:
 	int send(void *zsock, int flags=0) { return zmq_msg_send(&msg, zsock, flags); }
 
 	std::string as_string() { return std::string(reinterpret_cast<char*>(data()), size()); }
+
+	// move constructors
+	msg_single_t(msg_single_t&& other)
+	{
+		zmq_msg_init(&msg);
+		zmq_msg_move(&msg, &other.msg);
+	}
+	msg_single_t& operator=(msg_single_t&& other)
+	{
+		if (this != &other) zmq_msg_move(&msg, &other.msg);
+		return *this;
+	}
+
 private:
+	// copy constructors
 	msg_single_t(const msg_single_t&);
 	msg_single_t& operator=(const msg_single_t&);
 };
@@ -37,20 +62,10 @@ private:
 class msg_multi_t
 {
 public:
-	std::list<msg_single_t*> parts;
+	std::list<msg_single_t> parts;
 
-	msg_multi_t() {	}
-	~msg_multi_t() { reset(); }
-
-	void reset()
-	{
-		while (!parts.empty())
-		{
-			msg_single_t* frame = parts.front();
-			parts.pop_front();
-			delete frame;
-		}
-	}
+	msg_multi_t() {}
+	void reset() { parts.clear(); }
 
 	int recv(void *zsock)
 	{
@@ -58,15 +73,14 @@ public:
 		bool success = true;
 		bool more = true;
 		while (more) {
-			msg_single_t *frame = new msg_single_t();
-			int rc = frame->recv(zsock, 0);
+			msg_single_t frame;
+			int rc = frame.recv(zsock, 0);
 			if (rc==-1) {
 				success = false;
-				delete frame;
 				break;
 			}
-			more = frame->more();
-			parts.push_back(frame);
+			more = frame.more();
+			parts.push_back(std::move(frame));
 		}
 		return success ? 0 : -1;
 	}
@@ -76,20 +90,19 @@ public:
 		bool success = true;
 		while (!parts.empty())
 		{
-			msg_single_t* frame = parts.front();
-			int rc = frame->send(zsock, parts.size() > 1 ? ZMQ_SNDMORE : 0);
+			msg_single_t& frame = parts.front();
+			int rc = frame.send(zsock, parts.size() > 1 ? ZMQ_SNDMORE : 0);
 			if (rc==-1) {
 				success = false;
 				break;
 			}
 			parts.pop_front();
-			delete frame;
 		}
 		return success ? 0 : -1;
 	}
 
 private:
 	msg_multi_t(const msg_multi_t&);
-	void operator=(const msg_multi_t&);
+	msg_multi_t& operator=(const msg_multi_t&);
 };
 
