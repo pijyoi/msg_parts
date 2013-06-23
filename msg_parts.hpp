@@ -16,6 +16,27 @@ public:
 		zmq_msg_init_size(&msg, size); 
 		memcpy(data(), buffer, size); 
 	}
+	~msg_single_t() { zmq_msg_close(&msg); }
+
+	void reset() { zmq_msg_close(&msg); zmq_msg_init(&msg); }
+	void reset(size_t size) { zmq_msg_close(&msg); zmq_msg_init_size(&msg, size); }
+	void reset(const void* buffer, size_t size)
+	{
+		zmq_msg_close(&msg);
+		zmq_msg_init_size(&msg, size);
+		memcpy(data(), buffer, size);
+	}
+
+	size_t size() {	return zmq_msg_size(&msg); }
+	void* data() { return zmq_msg_data(&msg); }
+	bool more() { return zmq_msg_more(&msg)!=0; }
+
+	int recv(void *zsock, int flags=0) { return zmq_msg_recv(&msg, zsock, flags); }
+	int send(void *zsock, int flags=0) { return zmq_msg_send(&msg, zsock, flags); }
+
+	std::string as_string() { return std::string(reinterpret_cast<char*>(data()), size()); }
+
+	// string constructors
 	msg_single_t(const char* str)
 	{
 		size_t size = strlen(str);
@@ -27,20 +48,7 @@ public:
 		zmq_msg_init_size(&msg, str.size());
 		memcpy(data(), str.data(), str.size());
 	}
-	~msg_single_t() { zmq_msg_close(&msg); }
-
-	void reset() { zmq_msg_close(&msg); zmq_msg_init(&msg); }
-	void reset(size_t size) { zmq_msg_close(&msg); zmq_msg_init_size(&msg, size); }
-
-	size_t size() {	return zmq_msg_size(&msg); }
-	void* data() { return zmq_msg_data(&msg); }
-	bool more() { return zmq_msg_more(&msg)!=0; }
-
-	int recv(void *zsock, int flags=0) { return zmq_msg_recv(&msg, zsock, flags); }
-	int send(void *zsock, int flags=0) { return zmq_msg_send(&msg, zsock, flags); }
-
-	std::string as_string() { return std::string(reinterpret_cast<char*>(data()), size()); }
-
+ 
 	// move constructors
 	msg_single_t(msg_single_t&& other)
 	{
