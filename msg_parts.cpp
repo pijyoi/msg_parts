@@ -1,4 +1,5 @@
-#include <czmq.h>
+#include <zmq.h>
+#include <assert.h>
 
 #include "msg_parts.hpp"
 
@@ -8,68 +9,58 @@ int msg_parts_selftest()
 
     int rc = 0;
     //  @selftest
-    zctx_t *ctx = zctx_new ();
+    void *ctx = zmq_ctx_new();
     assert (ctx);
 
-    void *output = zsocket_new (ctx, ZMQ_PAIR);
+    void *output = zmq_socket (ctx, ZMQ_PAIR);
     assert (output);
-    zsocket_bind (output, "inproc://zmsg.test");
-    void *input = zsocket_new (ctx, ZMQ_PAIR);
+    zmq_bind (output, "inproc://zmsg.test");
+    void *input = zmq_socket (ctx, ZMQ_PAIR);
     assert (input);
-    zsocket_connect (input, "inproc://zmsg.test");
+    zmq_connect (input, "inproc://zmsg.test");
 
-    msg_multi_t msg;
-    
-    //  Test send and receive of single-frame message
-    msg.reset();
-    msg.parts.push_back("Hello");
-    rc = msg.send(output);
-    assert (rc == 0);
+    {
+	msg_single_t frame("Hello", 5);		// zframe_new
+	frame.send(output);			// zframe_send
 
-    rc = msg.recv(input);
-    assert (rc == 0);
-    std::string str = msg.parts.front().as_string();
-    printf("%s\n", str.c_str());
+	frame.recv(input);			// zframe_recv
+	std::string str(frame.as_string());	// zframe_strdup
 
-    //  Test send and receive of multi-frame message
-    msg.reset();
-    msg.parts.push_back(msg_single_t("Frame0", 6));
-    msg.parts.push_back(msg_single_t("Frame1"));
-
-    // Following doesn't work because msg_single_t has no constructor 
-    // that takes a std::string by _value_
-    //msg.parts.push_back(std::string("Frame2"));
-    // The following uses the msg_single_t constructor that takes a 
-    // std::string by _reference_
-    std::string str2("Frame2");
-    msg.parts.push_back(str2);
-
-    // we have no copy constructor for msg_single_t
-    // thus you have to explicitly use std::move
-    // if you construct the frame on another line
-    msg_single_t frame("Frame3", 6);
-    msg.parts.push_back(std::move(frame));
-
-    // No need to create a msg_single_t explicitly
-    msg.parts.push_back("Frame4");
-    msg.parts.push_back("Frame5");
-    msg.parts.push_back("Frame6");
-    msg.parts.push_back("Frame7");
-    msg.parts.push_back("Frame8");
-    msg.parts.push_back("Frame9");
-    rc = msg.send(output);
-    assert (rc == 0);
-
-    rc = msg.recv(input);
-    assert (rc == 0);
-    assert (msg.parts.size() == 10);
-
-    for (auto it=msg.parts.begin(); it!=msg.parts.end(); ++it) {
-        std::string str = (*it).as_string();
-        printf("%s\n", str.c_str());
+	printf("%s\n", str.c_str());
     }
 
-    zctx_destroy (&ctx);
+    {
+	msg_multi_t msg;
+
+	msg_single_t frame("Frame3", 6);
+	msg.parts.push_back(std::move(frame));		// zmsg_add
+	msg.parts.push_back(msg_single_t("Frame4", 6));	// zmsg_addmem
+	msg.parts.push_back("Frame5");			// zmsg_addstr
+
+	frame.reset("Frame2", 6);
+	msg.parts.push_front(std::move(frame));		// zmsg_push
+	msg.parts.push_front(msg_single_t("Frame1", 6));// zmsg_pushmem
+	msg.parts.push_front("Frame0");			// zmsg_pushstr
+
+	std::string str("Frame6");
+	msg.parts.push_back(str);
+
+	rc = msg.send(output);			// zmsg_send
+	assert (rc == 0);
+
+    	rc = msg.recv(input);			// zmsg_recv
+    	assert (rc == 0);
+    	assert (msg.parts.size() == 7);
+
+	for (auto it=msg.parts.begin(); it!=msg.parts.end(); ++it) {
+		std::string str = (*it).as_string();
+		printf("%s\n", str.c_str());
+	}
+    }
+
+    zmq_close(input);
+    zmq_close(output);
+    zmq_ctx_destroy (ctx);
     //  @end
     printf ("OK\n");
     return 0;
