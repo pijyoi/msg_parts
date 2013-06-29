@@ -24,7 +24,7 @@ int msg_parts_selftest()
 	frame.send(output);			// zframe_send
 
 	frame.recv(input);			// zframe_recv
-	std::string str(frame.as_string());	// zframe_strdup
+	std::string str(frame.str());		// zframe_strdup
 
 	printf("%s\n", str.c_str());
     }
@@ -53,7 +53,7 @@ int msg_parts_selftest()
     	assert (msg.parts.size() == 7);
 
 	for (auto it=msg.parts.begin(); it!=msg.parts.end(); ++it) {
-		std::string str = (*it).as_string();
+		std::string str = (*it).str();
 		printf("%s\n", str.c_str());
 	}
     }

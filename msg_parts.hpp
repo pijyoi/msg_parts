@@ -34,7 +34,7 @@ public:
 	int recv(void *zsock, int flags=0) { return zmq_msg_recv(&msg, zsock, flags); }
 	int send(void *zsock, int flags=0) { return zmq_msg_send(&msg, zsock, flags); }
 
-	std::string as_string() { return std::string(reinterpret_cast<char*>(data()), size()); }
+	std::string str() { return std::string(reinterpret_cast<char*>(data()), size()); }
 
 	// string constructors
 	msg_single_t(const char* str)
