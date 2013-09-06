@@ -24,7 +24,7 @@ int msg_parts_selftest()
 	frame.send(output);			// zframe_send
 
 	frame.recv(input);			// zframe_recv
-	std::string str(frame.str());		// zframe_strdup
+	std::string str = frame.str();		// zframe_strdup
 
 	printf("%s\n", str.c_str());
     }
