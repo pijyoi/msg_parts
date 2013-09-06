@@ -43,7 +43,7 @@ public:
 		zmq_msg_init_size(&msg, size);
 		memcpy(data(), str, size);
 	}
-	msg_single_t(std::string& str)
+	msg_single_t(const std::string& str)
 	{
 		zmq_msg_init_size(&msg, str.size());
 		memcpy(data(), str.data(), str.size());

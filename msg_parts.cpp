@@ -42,8 +42,7 @@ int msg_parts_selftest()
 	msg.parts.push_front(msg_single_t("Frame1", 6));// zmsg_pushmem
 	msg.parts.push_front("Frame0");			// zmsg_pushstr
 
-	std::string str("Frame6");
-	msg.parts.push_back(str);
+	msg.parts.push_back(std::string("Frame6"));
 
 	rc = msg.send(output);			// zmsg_send
 	assert (rc == 0);
