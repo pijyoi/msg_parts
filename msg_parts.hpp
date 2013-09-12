@@ -7,7 +7,7 @@
 class msg_single_t
 {
 public:
-	zmq_msg_t msg;
+	mutable zmq_msg_t msg;
 	
 	msg_single_t() { zmq_msg_init(&msg); }	
 	explicit msg_single_t(size_t size) { zmq_msg_init_size(&msg, size); }
@@ -61,10 +61,19 @@ public:
 		return *this;
 	}
 
-private:
-	// copy constructors
-	msg_single_t(const msg_single_t&);
-	msg_single_t& operator=(const msg_single_t&);
+	// copy constructor
+	msg_single_t(const msg_single_t& other)
+	{
+		zmq_msg_init(&msg);
+		zmq_msg_copy(&msg, &other.msg);
+	}
+
+	// copy assignment
+	msg_single_t& operator=(const msg_single_t& other)
+	{
+		if (this != &other) zmq_msg_copy(&msg, &other.msg);
+		return *this;
+	}
 };
 
 class msg_multi_t
