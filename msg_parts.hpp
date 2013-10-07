@@ -82,11 +82,10 @@ public:
 	std::list<msg_single_t> parts;
 
 	msg_multi_t() {}
-	void reset() { parts.clear(); }
 
 	int recv(void *zsock)
 	{
-		reset();
+		parts.clear();
 		bool success = true;
 		bool more = true;
 		while (more) {
