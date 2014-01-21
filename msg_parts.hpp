@@ -83,14 +83,14 @@ public:
 
 	msg_multi_t() {}
 
-	int recv(void *zsock)
+	int recv(void *zsock, int flags=0)
 	{
 		parts.clear();
 		bool success = true;
 		bool more = true;
 		while (more) {
 			msg_single_t frame;
-			int rc = frame.recv(zsock, 0);
+			int rc = frame.recv(zsock, flags);
 			if (rc==-1) {
 				success = false;
 				break;
@@ -101,13 +101,13 @@ public:
 		return success ? 0 : -1;
 	}
 
-	int send(void *zsock)
+	int send(void *zsock, int flags=0)
 	{
 		bool success = true;
 		while (!parts.empty())
 		{
 			msg_single_t& frame = parts.front();
-			int rc = frame.send(zsock, parts.size() > 1 ? ZMQ_SNDMORE : 0);
+			int rc = frame.send(zsock, flags | (parts.size() > 1 ? ZMQ_SNDMORE : 0));
 			if (rc==-1) {
 				success = false;
 				break;
