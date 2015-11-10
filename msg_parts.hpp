@@ -2,6 +2,10 @@
 #include <string>
 #include <cstring>
 
+#if __cplusplus >= 201402L
+#include <experimental/string_view>
+#endif
+
 #include <zmq.h>
 
 class msg_single_t
@@ -35,6 +39,14 @@ public:
     int send(void *zsock, int flags=0) { return zmq_msg_send(&msg, zsock, flags); }
 
     std::string str() { return std::string(reinterpret_cast<char*>(data()), size()); }
+
+    #if __cplusplus >= 201402L
+    std::experimental::string_view
+    #else
+    // fallback to a copy
+    std::string
+    #endif
+    str_view() { return { static_cast<char*>(data()), size() }; }
 
     // string constructors
     msg_single_t(const char* str)

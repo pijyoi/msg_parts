@@ -1,3 +1,5 @@
+#include <iostream>
+
 #include <zmq.h>
 #include <assert.h>
 
@@ -26,7 +28,7 @@ int msg_parts_selftest()
         frame.recv(input);          // zframe_recv
         std::string str = frame.str();      // zframe_strdup
 
-        printf("%s\n", str.c_str());
+        std::cout << str << std::endl;
     }
 
     {
@@ -51,9 +53,9 @@ int msg_parts_selftest()
         assert (rc == 0);
         assert (msg.parts.size() == 7);
 
-        for (auto&& fr: msg.parts) {
-            std::string str = fr.str();
-            printf("%s\n", str.c_str());
+        for (auto&& part: msg.parts) {
+            auto str = part.str_view();
+            std::cout << str << std::endl;
         }
     }
 
