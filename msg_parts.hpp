@@ -42,11 +42,12 @@ public:
 
     #if __cplusplus >= 201402L
     std::experimental::string_view
+    str_view() { return { static_cast<char*>(data()), size() }; }
     #else
     // fallback to a copy
     std::string
+    str_view() { return std::string(static_cast<char*>(data()), size()); }
     #endif
-    str_view() { return { static_cast<char*>(data()), size() }; }
 
     // string constructors
     msg_single_t(const char* str)
