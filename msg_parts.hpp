@@ -116,17 +116,24 @@ public:
 
     int send(void *zsock, int flags=0)
     {
-        bool success = true;
-        while (!parts.empty())
+        auto zit = std::begin(parts);
+        auto eit = std::end(parts);
+        for (; zit!=eit; ++zit)
         {
-            msg_single_t& frame = parts.front();
-            int rc = frame.send(zsock, flags | (parts.size() > 1 ? ZMQ_SNDMORE : 0));
+            auto next = zit;
+            std::advance(next, 1);
+            bool more = next != eit;
+
+            int rc = zit->send(zsock, flags | (more ? ZMQ_SNDMORE : 0));
             if (rc==-1) {
-                success = false;
                 break;
             }
-            parts.pop_front();
         }
+
+        // erase all successfully sent frames
+        parts.erase(std::begin(parts), zit);
+
+        bool success = zit==eit;
         return success ? 0 : -1;
     }
 
