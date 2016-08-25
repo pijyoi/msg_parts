@@ -116,9 +116,9 @@ public:
 
     int send(void *zsock, int flags=0)
     {
+        bool success = true;
         auto zit = std::begin(parts);
-        auto eit = std::end(parts);
-        for (; zit!=eit; ++zit)
+        for (auto eit=std::end(parts); zit!=eit; ++zit)
         {
             auto next = zit;
             std::advance(next, 1);
@@ -126,14 +126,15 @@ public:
 
             int rc = zit->send(zsock, flags | (more ? ZMQ_SNDMORE : 0));
             if (rc==-1) {
+                success = false;
                 break;
             }
         }
 
         // erase all successfully sent frames
+        // (unfortunately, errno potentially gets clobbered)
         parts.erase(std::begin(parts), zit);
 
-        bool success = zit==eit;
         return success ? 0 : -1;
     }
 
