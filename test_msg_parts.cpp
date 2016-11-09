@@ -46,6 +46,14 @@ int msg_parts_selftest()
 
         msg.parts.push_back(std::string("Frame6"));
 
+        rc = msg.sendcopy(output);
+        assert (rc == 0);
+
+        msg_multi_t msgin;
+        rc = msgin.recv(input);
+        assert (rc == 0);
+        assert (msgin.parts.size() == 7);
+
         rc = msg.send(output);          // zmsg_send
         assert (rc == 0);
 

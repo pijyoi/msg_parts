@@ -116,6 +116,9 @@ public:
 
     int send(void *zsock, int flags=0)
     {
+        if (parts.empty())
+            return -1;
+
         bool success = true;
         while (!parts.empty())
         {
@@ -126,6 +129,28 @@ public:
                 break;
             }
             parts.pop_front();
+        }
+        return success ? 0 : -1;
+    }
+
+    int sendcopy(void *zsock, int flags=0)
+    {
+        if (parts.empty())
+            return -1;
+
+        bool success = true;
+
+        auto eit = parts.end();
+        --eit;              // iterator to last item
+
+        for (auto it=parts.begin(); it!=parts.end(); ++it)
+        {
+            msg_single_t frame(*it);
+            int rc = frame.send(zsock, flags | (it!=eit ? ZMQ_SNDMORE : 0));
+            if (rc==-1) {
+                success = false;
+                break;
+            }
         }
         return success ? 0 : -1;
     }
